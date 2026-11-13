@@ -101,6 +101,15 @@
       cursor: pointer;
     }
 
+    /* Compteur de résultats */
+    .counter-bar {
+      max-width: 1100px;
+      margin: 16px auto 0 auto;
+      padding: 0 18px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
     /* Lecteur Vidéo & Secours */
     #playerSection {
       display: none;
@@ -166,7 +175,7 @@
     /* Grille */
     main {
       max-width: 1100px;
-      margin: 20px auto;
+      margin: 10px auto 20px auto;
       padding: 0 18px;
     }
 
@@ -281,6 +290,7 @@
 
       <select id="collectionSelect" onchange="fetchMedia()">
         <option value="feature_films">Films</option>
+        <option value="documentaryfilms">Documentaires</option>
         <option value="classic_tv">Séries & TV</option>
         <option value="sci-fi_horror">Sci-Fi & Horreur</option>
         <option value="animationandcartoons">Animation</option>
@@ -290,6 +300,8 @@
       <button class="btn-search" onclick="fetchMedia()">OK</button>
     </div>
   </header>
+
+  <div class="counter-bar" id="counterBar"></div>
 
   <section id="playerSection">
     <div class="player-wrap">
@@ -330,8 +342,10 @@
       document.getElementById('tabDiscover').classList.toggle('active', tab === 'discover');
       document.getElementById('tabFavs').classList.toggle('active', tab === 'favs');
       document.getElementById('filterBar').style.display = tab === 'discover' ? 'flex' : 'none';
+      document.getElementById('counterBarstyle').style.display = tab === 'discover' ? 'block' : 'none';
 
       if (tab === 'favs') {
+        document.getElementById('counterBar').textContent = '';
         renderCards(favorites, true);
       } else {
         fetchMedia();
@@ -359,6 +373,7 @@
     async function fetchMedia() {
       const grid = document.getElementById('mediaGrid');
       const status = document.getElementById('statusMsg');
+      const counterBar = document.getElementById('counterBar');
       const query = document.getElementById('searchInput').value.trim();
       const collection = document.getElementById('collectionSelect').value;
       const lang = document.getElementById('langSelect').value;
@@ -367,11 +382,11 @@
       grid.innerHTML = '';
       status.style.display = 'block';
       status.textContent = 'Recherche des médias disponibles...';
+      counterBar.textContent = '';
 
       let q = `collection:(${collection}) AND mediatype:(movies)`;
       if (lang) q += ` AND language:(${lang})`;
 
-      // Application dynamique du filtre d'année
       if (yearFilter === '2020') q += ` AND year:[2020 TO 2030]`;
       else if (yearFilter === '2010') q += ` AND year:[2010 TO 2019]`;
       else if (yearFilter === '2000') q += ` AND year:[2000 TO 2009]`;
@@ -387,12 +402,16 @@
         const res = await fetch(url);
         const data = await res.json();
         const docs = data.response.docs;
+        const totalFound = data.response.numFound;
 
         if (!docs || docs.length === 0) {
           status.textContent = 'Aucun titre trouvé pour ces critères.';
+          counterBar.textContent = '0 élément disponible';
           return;
         }
+
         status.style.display = 'none';
+        counterBar.textContent = `📂 Environ ${totalFound.toLocaleString()} éléments trouvés dans cette catégorie`;
         renderCards(docs, false);
       } catch (e) {
         status.textContent = 'Erreur de connexion aux archives.';
