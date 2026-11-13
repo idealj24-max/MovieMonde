@@ -3,9 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MovieMonde TV - En direct</title>
+  <title>MovieMonde TV - Décentralisé & En direct</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#10b981">
+  
+  <!-- Inclusion de la bibliothèque WebTorrent (version client web P2P) -->
+  <script src="https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js"></script>
+
   <style>
     :root {
       --bg: #090d16;
@@ -438,7 +442,7 @@
 
   <div class="counter-bar" id="counterBar"></div>
 
-  <!-- Lecteur Vidéo (Catalogue) -->
+  <!-- Lecteur Vidéo (Catalogue & Support P2P) -->
   <section id="playerSection">
     <div class="player-wrap">
       <div class="player-bar">
@@ -451,7 +455,10 @@
         <button onclick="tryAlternativeSource()">Essayer un flux de secours</button>
       </div>
 
-      <iframe id="videoFrame" allowfullscreen></iframe>
+      <!-- Emplacement dynamique du lecteur (Iframe classique ou balise <video> P2P WebTorrent) -->
+      <div id="mediaContainer">
+        <iframe id="videoFrame" allowfullscreen></iframe>
+      </div>
     </div>
   </section>
 
@@ -486,6 +493,9 @@
       navigator.serviceWorker.register('./sw.js').catch(() => {});
     }
 
+    // Initialisation du client WebTorrent global (P2P Décentralisé)
+    const client = new WebTorrent();
+
     let currentTab = 'discover';
     let favorites = JSON.parse(localStorage.getItem('moviemonde_favs') || '[]');
     let currentIdentifier = '';
@@ -505,7 +515,9 @@
       document.getElementById('filterBar').style.display = tab === 'discover' ? 'flex' : 'none';
       document.getElementById('counterBar').style.display = tab === 'discover' ? 'block' : 'none';
       document.getElementById('playerSection').style.display = 'none';
-      document.getElementById('videoFrame').src = '';
+      
+      // Nettoyage du lecteur lors du changement d'onglet
+      closePlayer();
 
       document.getElementById('liveSection').style.display = tab === 'live' ? 'block' : 'none';
       document.getElementById('statusMsg').style.display = tab === 'live' ? 'none' : 'block';
@@ -696,11 +708,16 @@
       });
     }
 
+    // Fonction de lecture standard (archive.org) avec support de secours
     function playVideo(id, title) {
       currentIdentifier = id;
       document.getElementById('nowPlayingTitle').textContent = title;
       document.getElementById('fallbackBanner').style.display = 'none';
-      document.getElementById('videoFrame').src = `https://archive.org/embed/${id}?autoplay=1`;
+      
+      // Remet l'iframe classique si elle a été remplacée par un lecteur P2P
+      const container = document.getElementById('mediaContainer');
+      container.innerHTML = `<iframe id="videoFrame" allowfullscreen src="https://archive.org/embed/${id}?autoplay=1"></iframe>`;
+
       document.getElementById('playerSection').style.display = 'block';
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -711,16 +728,60 @@
       }, 6000);
     }
 
+    // Nouvelle fonction de lecture P2P Décentralisée (WebTorrent)
+    function playDecentralizedVideo(magnetURI, title) {
+      document.getElementById('nowPlayingTitle').textContent = title;
+      document.getElementById('fallbackBanner').style.display = 'none';
+      document.getElementById('playerSection').style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      const container = document.getElementById('mediaContainer');
+      container.innerHTML = '';
+
+      // Création du lecteur natif HTML5 pour le flux P2P
+      const videoElement = document.createElement('video');
+      videoElement.id = 'webTorrentVideo';
+      videoElement.controls = true;
+      videoElement.autoplay = true;
+      videoElement.style.width = '100%';
+      videoElement.style.borderRadius = '8px';
+      videoElement.style.background = '#111';
+      container.appendChild(videoElement);
+
+      // Connexion au réseau décentralisé WebTorrent
+      client.add(magnetURI, function (torrent) {
+        const file = torrent.files.find(function (file) {
+          return file.name.endsWith('.mp4') || file.name.endsWith('.mkv') || file.name.endsWith('.webm');
+        });
+
+        if (file) {
+          file.renderTo(videoElement, { autoplay: true }, function (err) {
+            if (err) console.error('Erreur lors du rendu P2P :', err);
+          });
+        } else {
+          alert('Aucun fichier vidéo compatible trouvé dans ce torrent.');
+        }
+      });
+    }
+
     function tryAlternativeSource() {
       const frame = document.getElementById('videoFrame');
-      frame.src = `https://archive.org/details/${currentIdentifier}?output=embed`;
-      document.getElementById('fallbackBanner').style.display = 'none';
+      if (frame) {
+        frame.src = `https://archive.org/details/${currentIdentifier}?output=embed`;
+        document.getElementById('fallbackBanner').style.display = 'none';
+      }
     }
 
     function closePlayer() {
-      document.getElementById('videoFrame').src = '';
+      const container = document.getElementById('mediaContainer');
+      container.innerHTML = `<iframe id="videoFrame" allowfullscreen></iframe>`;
       document.getElementById('playerSection').style.display = 'none';
       document.getElementById('fallbackBanner').style.display = 'none';
+      
+      // Coupe les connexions WebTorrent actives en cours pour libérer la mémoire
+      if (client && client.torrents.length > 0) {
+        client.torrents.forEach(t => t.destroy());
+      }
     }
 
     fetchMedia();
