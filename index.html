@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MovieMonde - Films & Séries Gratuits</title>
+  <title>MovieMonde TV - En direct</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#10b981">
   <style>
@@ -73,6 +73,29 @@
       font-weight: 700;
     }
 
+    /* Emplacement Publicitaire Discret */
+    .ad-banner-container {
+      max-width: 1100px;
+      margin: 10px auto;
+      padding: 0 18px;
+    }
+
+    .ad-box {
+      background: rgba(19, 27, 46, 0.7);
+      border: 1px dashed #334155;
+      padding: 8px 12px;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .ad-box a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
     .controls {
       max-width: 1100px;
       margin: 0 auto;
@@ -104,13 +127,13 @@
 
     .counter-bar {
       max-width: 1100px;
-      margin: 16px auto 0 auto;
+      margin: 10px auto 0 auto;
       padding: 0 18px;
       font-size: 13px;
       color: var(--muted);
     }
 
-    /* Lecteur Vidéo & Secours (Catalogue) */
+    /* Lecteur Vidéo (Catalogue) */
     #playerSection {
       display: none;
       background: #000;
@@ -172,24 +195,44 @@
       background: #111;
     }
 
-    /* Mode Live TV */
+    /* Mode Live TV (Page de Télé en continu) */
     #liveSection {
       display: none;
       max-width: 900px;
-      margin: 30px auto;
+      margin: 20px auto;
       padding: 0 18px;
     }
 
-    .live-container {
+    .tv-studio {
       background: var(--surface);
       border-radius: 12px;
       overflow: hidden;
       border: 1px solid #1e293b;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
     }
 
-    .live-header {
-      background: #1e293b;
-      padding: 12px 16px;
+    .tv-screen {
+      position: relative;
+      background: #000;
+      width: 100%;
+    }
+
+    .tv-screen iframe {
+      display: block;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+    }
+
+    .tv-ticker {
+      background: #0f172a;
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      border-top: 1px solid #1e293b;
+    }
+
+    .tv-header-info {
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -200,59 +243,63 @@
       color: #fff;
       padding: 4px 10px;
       border-radius: 20px;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 1px;
+      animation: pulse 2s infinite;
     }
 
-    .live-info {
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
     }
 
-    .live-title {
-      font-size: 1.2rem;
+    .channel-name {
+      font-size: 0.85rem;
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .tv-current-title {
+      font-size: 1.15rem;
       font-weight: 700;
       color: var(--text);
     }
 
-    .live-desc {
-      font-size: 13px;
-      color: var(--muted);
-    }
-
-    .live-actions {
+    .tv-controls-bar {
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
+      margin-top: 4px;
     }
 
-    .btn-next-live {
+    .btn-tv-action {
       background: var(--accent);
       color: #052e16;
       border: none;
-      padding: 9px 16px;
+      padding: 8px 14px;
       border-radius: 8px;
       font-weight: 700;
       cursor: pointer;
       font-size: 13px;
     }
 
-    .btn-playlist {
+    .btn-tv-secondary {
       background: #334155;
       color: #fff;
       border: none;
-      padding: 9px 16px;
+      padding: 8px 14px;
       border-radius: 8px;
       font-weight: 600;
       cursor: pointer;
       font-size: 13px;
     }
 
-    /* Grille */
+    /* Grille Catalogue */
     main {
       max-width: 1100px;
       margin: 10px auto 20px auto;
@@ -345,7 +392,7 @@
       <div class="nav-tabs">
         <button class="tab-btn active" id="tabDiscover" onclick="switchTab('discover')">Catalogue</button>
         <button class="tab-btn" id="tabFavs" onclick="switchTab('favs')">Favoris (<span id="favCount">0</span>)</button>
-        <button class="tab-btn" id="tabLive" onclick="switchTab('live')">🔴 En direct (TV)</button>
+        <button class="tab-btn" id="tabLive" onclick="switchTab('live')">🔴 MovieMonde TV</button>
       </div>
     </div>
 
@@ -382,6 +429,13 @@
     </div>
   </header>
 
+  <!-- Emplacement publicitaire discret -->
+  <div class="ad-banner-container">
+    <div class="ad-box">
+      Annonce partenaire : <a href="#" target="_blank">Découvrez nos services recommandés</a> (Espace publicitaire libre)
+    </div>
+  </div>
+
   <div class="counter-bar" id="counterBar"></div>
 
   <!-- Lecteur Vidéo (Catalogue) -->
@@ -401,20 +455,22 @@
     </div>
   </section>
 
-  <!-- Section Mode Live TV -->
+  <!-- Page TV en direct (Mode Chaîne Continue) -->
   <section id="liveSection">
-    <div class="live-container">
-      <div class="live-header">
-        <span style="font-weight: 700; font-size: 0.9rem;">MovieMonde TV (Canal en continu)</span>
-        <span class="live-badge">EN DIRECT</span>
+    <div class="tv-studio">
+      <div class="tv-screen">
+        <iframe id="tvVideoFrame" allowfullscreen></iframe>
       </div>
-      <iframe id="liveVideoFrame" allowfullscreen></iframe>
-      <div class="live-info">
-        <div class="live-title" id="liveTitle">Chargement du programme en cours...</div>
-        <div class="live-desc">Diffusion continue de films, séries et documentaires issus des archives publiques. Téléchargez la playlist ci-dessous pour l'importer dans une application de télévision connectée.</div>
-        <div class="live-actions">
-          <button class="btn-next-live" onclick="nextLiveChannel()">Programme suivant ⏭️</button>
-          <button class="btn-playlist" onclick="downloadM3U()">📥 Télécharger la playlist TV (.m3u)</button>
+      <div class="tv-ticker">
+        <div class="tv-header-info">
+          <span class="channel-name">Canal Officiel MovieMonde TV</span>
+          <span class="live-badge">EN DIRECT 24/7</span>
+        </div>
+        <div class="tv-current-title" id="tvCurrentTitle">Connexion au signal de la chaîne...</div>
+        <div style="font-size: 12px; color: var(--muted);">Diffusion continue de films, séries et documentaires. Programmé pour enchaîner automatiquement.</div>
+        <div class="tv-controls-bar">
+          <button class="btn-tv-action" onclick="nextTvChannel()">Programme suivant ⏭️</button>
+          <button class="btn-tv-secondary" onclick="downloadM3U()">📥 Télécharger la playlist TV (.m3u)</button>
         </div>
       </div>
     </div>
@@ -433,8 +489,8 @@
     let currentTab = 'discover';
     let favorites = JSON.parse(localStorage.getItem('moviemonde_favs') || '[]');
     let currentIdentifier = '';
-    let livePlaylist = [];
-    let liveIndex = 0;
+    let tvPlaylist = [];
+    let tvIndex = 0;
 
     function updateFavCount() {
       document.getElementById('favCount').textContent = favorites.length;
@@ -461,7 +517,7 @@
       } else if (tab === 'discover') {
         fetchMedia();
       } else if (tab === 'live') {
-        initLiveTV();
+        initTvStation();
       }
     }
 
@@ -531,52 +587,52 @@
       }
     }
 
-    async function initLiveTV() {
-      const liveTitle = document.getElementById('liveTitle');
-      if (livePlaylist.length > 0) {
-        playCurrentLive();
+    async function initTvStation() {
+      const tvTitle = document.getElementById('tvCurrentTitle');
+      if (tvPlaylist.length > 0) {
+        playTvProgram();
         return;
       }
 
-      liveTitle.textContent = 'Chargement de la chaîne en direct...';
-      const url = `https://archive.org/advancedsearch.php?q=collection:(feature_films) AND mediatype:(movies)&fl[]=identifier,title&sort[]=random&rows=30&output=json`;
+      tvTitle.textContent = 'Initialisation de la grille TV...';
+      const url = `https://archive.org/advancedsearch.php?q=collection:(feature_films OR documentaryfilms) AND mediatype:(movies)&fl[]=identifier,title&sort[]=random&rows=35&output=json`;
 
       try {
         const res = await fetch(url);
         const data = await res.json();
-        livePlaylist = data.response.docs;
-        if (livePlaylist.length > 0) {
-          liveIndex = 0;
-          playCurrentLive();
+        tvPlaylist = data.response.docs;
+        if (tvPlaylist.length > 0) {
+          tvIndex = 0;
+          playTvProgram();
         } else {
-          liveTitle.textContent = 'Aucun flux direct disponible pour le moment.';
+          tvTitle.textContent = 'Aucun programme disponible pour le moment.';
         }
       } catch (e) {
-        liveTitle.textContent = 'Erreur de chargement du flux direct.';
+        tvTitle.textContent = 'Erreur de diffusion du canal en direct.';
       }
     }
 
-    function playCurrentLive() {
-      if (livePlaylist.length === 0) return;
-      const currentItem = livePlaylist[liveIndex];
-      document.getElementById('liveTitle').textContent = `En diffusion : ${currentItem.title}`;
-      document.getElementById('liveVideoFrame').src = `https://archive.org/embed/${currentItem.identifier}?autoplay=1`;
+    function playTvProgram() {
+      if (tvPlaylist.length === 0) return;
+      const currentItem = tvPlaylist[tvIndex];
+      document.getElementById('tvCurrentTitle').textContent = `En diffusion : ${currentItem.title}`;
+      document.getElementById('tvVideoFrame').src = `https://archive.org/embed/${currentItem.identifier}?autoplay=1`;
     }
 
-    function nextLiveChannel() {
-      if (livePlaylist.length === 0) return;
-      liveIndex = (liveIndex + 1) % livePlaylist.length;
-      playCurrentLive();
+    function nextTvChannel() {
+      if (tvPlaylist.length === 0) return;
+      tvIndex = (tvIndex + 1) % tvPlaylist.length;
+      playTvProgram();
     }
 
     function downloadM3U() {
-      if (livePlaylist.length === 0) {
+      if (tvPlaylist.length === 0) {
         alert('La playlist est en cours de chargement, réessayez dans un instant.');
         return;
       }
 
       let m3uContent = '#EXTM3U\n';
-      livePlaylist.forEach((item, index) => {
+      tvPlaylist.forEach((item, index) => {
         const title = item.title ? item.title.replace(/[\r\n]+/g, ' ') : `Programme ${index + 1}`;
         m3uContent += `#EXTINF:-1 tvg-id="moviemonde_${index}" tvg-name="${title}" group-title="MovieMonde TV",${title}\n`;
         m3uContent += `https://archive.org/embed/${item.identifier}?autoplay=1\n`;
