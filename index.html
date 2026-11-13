@@ -208,28 +208,46 @@
 
     .live-info {
       padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
 
     .live-title {
       font-size: 1.2rem;
       font-weight: 700;
-      margin-bottom: 6px;
       color: var(--text);
     }
 
     .live-desc {
       font-size: 13px;
       color: var(--muted);
-      margin-bottom: 14px;
+    }
+
+    .live-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
     }
 
     .btn-next-live {
       background: var(--accent);
       color: #052e16;
       border: none;
-      padding: 8px 16px;
+      padding: 9px 16px;
       border-radius: 8px;
       font-weight: 700;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .btn-playlist {
+      background: #334155;
+      color: #fff;
+      border: none;
+      padding: 9px 16px;
+      border-radius: 8px;
+      font-weight: 600;
       cursor: pointer;
       font-size: 13px;
     }
@@ -393,8 +411,11 @@
       <iframe id="liveVideoFrame" allowfullscreen></iframe>
       <div class="live-info">
         <div class="live-title" id="liveTitle">Chargement du programme en cours...</div>
-        <div class="live-desc">Diffusion continue de films, séries et documentaires issus des archives publiques.</div>
-        <button class="btn-next-live" onclick="nextLiveChannel()">Passer au programme suivant ⏭️</button>
+        <div class="live-desc">Diffusion continue de films, séries et documentaires issus des archives publiques. Téléchargez la playlist ci-dessous pour l'importer dans une application de télévision connectée.</div>
+        <div class="live-actions">
+          <button class="btn-next-live" onclick="nextLiveChannel()">Programme suivant ⏭️</button>
+          <button class="btn-playlist" onclick="downloadM3U()">📥 Télécharger la playlist TV (.m3u)</button>
+        </div>
       </div>
     </div>
   </section>
@@ -518,7 +539,7 @@
       }
 
       liveTitle.textContent = 'Chargement de la chaîne en direct...';
-      const url = `https://archive.org/advancedsearch.php?q=collection:(feature_films) AND mediatype:(movies)&fl[]=identifier,title&sort[]=random&rows=20&output=json`;
+      const url = `https://archive.org/advancedsearch.php?q=collection:(feature_films) AND mediatype:(movies)&fl[]=identifier,title&sort[]=random&rows=30&output=json`;
 
       try {
         const res = await fetch(url);
@@ -546,6 +567,30 @@
       if (livePlaylist.length === 0) return;
       liveIndex = (liveIndex + 1) % livePlaylist.length;
       playCurrentLive();
+    }
+
+    function downloadM3U() {
+      if (livePlaylist.length === 0) {
+        alert('La playlist est en cours de chargement, réessayez dans un instant.');
+        return;
+      }
+
+      let m3uContent = '#EXTM3U\n';
+      livePlaylist.forEach((item, index) => {
+        const title = item.title ? item.title.replace(/[\r\n]+/g, ' ') : `Programme ${index + 1}`;
+        m3uContent += `#EXTINF:-1 tvg-id="moviemonde_${index}" tvg-name="${title}" group-title="MovieMonde TV",${title}\n`;
+        m3uContent += `https://archive.org/embed/${item.identifier}?autoplay=1\n`;
+      });
+
+      const blob = new Blob([m3uContent], { type: 'audio/x-mpegurl' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'moviemonde-tv.m3u';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     }
 
     function renderCards(items, isFavView) {
