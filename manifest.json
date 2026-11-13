@@ -1,0 +1,16 @@
+{
+  "name": "MovieMonde - Cinéma & Séries Libres",
+  "short_name": "MovieMonde",
+  "description": "Catalogue automatique de films et séries gratuits du domaine public.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#090d16",
+  "theme_color": "#10b981",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2503/2503508.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
